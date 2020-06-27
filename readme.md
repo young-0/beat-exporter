@@ -1,6 +1,7 @@
 # beat-exporter for Prometheus ![](https://github.com/trustpilot/beat-exporter/workflows/test-and-build/badge.svg)
 
 - 一个监控 filebeat metrics 的程序，每次只监控一个 filebeat。
+- 增加了 filebeat 发送到kafka时，监控数据中kafka相关的指标。
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/trustpilot/beat-exporter.svg?maxAge=604800)](https://hub.docker.com/r/trustpilot/beat-exporter/)
 
