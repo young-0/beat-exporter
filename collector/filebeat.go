@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//Filebeat json structure
+// Filebeat json structure
 type Filebeat struct {
 	Events struct {
 		Active float64 `json:"active"`
@@ -13,11 +13,12 @@ type Filebeat struct {
 	} `json:"events"`
 
 	Harvester struct {
-		Closed    float64 `json:"closed"`
-		OpenFiles float64 `json:"open_files"`
-		Running   float64 `json:"running"`
-		Skipped   float64 `json:"skipped"`
-		Started   float64 `json:"started"`
+		Closed    float64                  `json:"closed"`
+		OpenFiles float64                  `json:"open_files"`
+		Running   float64                  `json:"running"`
+		Skipped   float64                  `json:"skipped"`
+		Started   float64                  `json:"started"`
+		Files     map[string]harvesterFile `json:"files"` // 增加 Filebeat.Harvester.Files 的支持
 	} `json:"harvester"`
 
 	Input struct {
@@ -29,7 +30,15 @@ type Filebeat struct {
 		} `json:"log"`
 	} `json:"input"`
 }
-
+// 增加 Filebeat.Harvester.Files 的支持
+type harvesterFile struct {
+	// LastEventPublishedTime float64 `json:"last_event_published_time"`
+	// LastEventTimestamp  float64 `json:"last_event_timestamp"`
+	Name       string  `json:"name"`
+	ReadOffset float64 `json:"read_offset"`
+	Size       float64 `json:"size"`
+	// StartTime   float64 `json:"start_time"`
+}
 type filebeatCollector struct {
 	beatInfo *BeatInfo
 	stats    *Stats
@@ -150,6 +159,27 @@ func (c *filebeatCollector) Collect(ch chan<- prometheus.Metric) {
 
 	for _, i := range c.metrics {
 		ch <- prometheus.MustNewConstMetric(i.desc, i.valType, i.eval(c.stats))
+	}
+	// 增加 Filebeat.Harvester.Files 的支持
+	// fmt.Printf("%#v\n",c.stats.Filebeat.Harvester.Files)
+	// for _, fileInfo := range c.stats.Filebeat.Harvester.Files {
+	// 	fmt.Println(fileInfo.Name, fileInfo.ReadOffset, fileInfo.Size)
+	// 	}
+	for _, fileInfo := range c.stats.Filebeat.Harvester.Files {
+		// fmt.Println(fileInfo.Name, fileInfo.ReadOffset, fileInfo.Size)
+
+		desc := prometheus.NewDesc(
+			prometheus.BuildFQName("filebeat", "filebeat", "harvester"),
+			"filebeat.harvester",
+			nil, prometheus.Labels{"harvester": "files", "name": fileInfo.Name, "verbose": "read_offset"},
+		)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, fileInfo.ReadOffset)
+		desc = prometheus.NewDesc(
+			prometheus.BuildFQName("filebeat", "filebeat", "harvester"),
+			"filebeat.harvester",
+			nil, prometheus.Labels{"harvester": "files", "name": fileInfo.Name, "verbose": "size"},
+		)
+		ch <- prometheus.MustNewConstMetric(desc, prometheus.UntypedValue, fileInfo.Size)
 	}
 
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//LibBeat json structure
+// LibBeat json structure
 type LibBeat struct {
 	Config struct {
 		Module struct {
@@ -16,9 +16,16 @@ type LibBeat struct {
 	} `json:"config"`
 	Output   LibBeatOutput   `json:"output"`
 	Pipeline LibBeatPipeline `json:"pipeline"`
+	// 下面添加对 outputs.kafka 的支持
+	Outputs struct {
+		Module struct {
+			BytesRead  float64 `json:"bytes_read"`
+			BytesWrite float64 `json:"bytes_write"`
+		} `json:"kafka"`
+	} `json:"outputs"`
 }
 
-//LibBeatEvents json structure
+// LibBeatEvents json structure
 type LibBeatEvents struct {
 	Acked      float64 `json:"acked"`
 	Active     float64 `json:"active"`
@@ -31,13 +38,13 @@ type LibBeatEvents struct {
 	Retry      float64 `json:"retry"`
 }
 
-//LibBeatOutputBytesErrors json structure
+// LibBeatOutputBytesErrors json structure
 type LibBeatOutputBytesErrors struct {
 	Bytes  float64 `json:"bytes"`
 	Errors float64 `json:"errors"`
 }
 
-//LibBeatOutput json structure
+// LibBeatOutput json structure
 type LibBeatOutput struct {
 	Events LibBeatEvents            `json:"events"`
 	Read   LibBeatOutputBytesErrors `json:"read"`
@@ -45,7 +52,7 @@ type LibBeatOutput struct {
 	Type   string                   `json:"type"`
 }
 
-//LibBeatPipeline json structure
+// LibBeatPipeline json structure
 type LibBeatPipeline struct {
 	Clients float64       `json:"clients"`
 	Events  LibBeatEvents `json:"events"`
@@ -68,6 +75,30 @@ func NewLibBeatCollector(beatInfo *BeatInfo, stats *Stats) prometheus.Collector 
 		beatInfo: beatInfo,
 		stats:    stats,
 		metrics: exportedMetrics{
+			// 新增 libbeat.outputs.kafka.bytes_read
+			{
+				desc: prometheus.NewDesc(
+					prometheus.BuildFQName(beatInfo.Beat, "libbeat", "outputs_kafka_bytes_read"),
+					"libbeat.outputs.kafka.bytes_read",
+					nil, nil,
+				),
+				eval: func(stats *Stats) float64 {
+					return stats.LibBeat.Outputs.Module.BytesRead
+				},
+				valType: prometheus.CounterValue,
+			},
+			// 新增 libbeat.outputs.kafka.bytes_write
+			{
+				desc: prometheus.NewDesc(
+					prometheus.BuildFQName(beatInfo.Beat, "libbeat", "outputs_kafka_bytes_write"),
+					"libbeat.outputs.kafka.bytes_write",
+					nil, nil,
+				),
+				eval: func(stats *Stats) float64 {
+					return stats.LibBeat.Outputs.Module.BytesWrite
+				},
+				valType: prometheus.CounterValue,
+			},
 			{
 				desc: prometheus.NewDesc(
 					prometheus.BuildFQName(beatInfo.Beat, "libbeat_config", "reloads_total"),

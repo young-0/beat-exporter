@@ -22,7 +22,7 @@ type mainCollector struct {
 	targetDesc *prometheus.Desc
 	targetUp   *prometheus.Desc
 	metrics    exportedMetrics
-	systemBeat bool
+	systemBeat bool // default false
 }
 
 // HackfixRegex regex to replace JSON part
@@ -53,13 +53,13 @@ func NewMainCollector(client *http.Client, url *url.URL, name string, beatInfo *
 		systemBeat: systemBeat,
 	}
 
-	beat.Collectors["system"] = NewSystemCollector(beatInfo, beat.Stats)
+	// beat.Collectors["system"] = NewSystemCollector(beatInfo, beat.Stats)
 	beat.Collectors["beat"] = NewBeatCollector(beatInfo, beat.Stats)
 	beat.Collectors["libbeat"] = NewLibBeatCollector(beatInfo, beat.Stats)
-	beat.Collectors["registrar"] = NewRegistrarCollector(beatInfo, beat.Stats)
+	// beat.Collectors["registrar"] = NewRegistrarCollector(beatInfo, beat.Stats)
 	beat.Collectors["filebeat"] = NewFilebeatCollector(beatInfo, beat.Stats)
-	beat.Collectors["metricbeat"] = NewMetricbeatCollector(beatInfo, beat.Stats)
-	beat.Collectors["auditd"] = NewAuditdCollector(beatInfo, beat.Stats)
+	// beat.Collectors["metricbeat"] = NewMetricbeatCollector(beatInfo, beat.Stats)
+	// beat.Collectors["auditd"] = NewAuditdCollector(beatInfo, beat.Stats)
 
 	return beat
 }
@@ -79,13 +79,13 @@ func (b *mainCollector) Describe(ch chan<- *prometheus.Desc) {
 	}
 	b.Collectors["beat"].Describe(ch)
 	b.Collectors["libbeat"].Describe(ch)
-	b.Collectors["auditd"].Describe(ch)
+	// b.Collectors["auditd"].Describe(ch)
 
 	// Customized collectors per beat type
 	switch b.beatInfo.Beat {
 	case "filebeat":
 		b.Collectors["filebeat"].Describe(ch)
-		b.Collectors["registrar"].Describe(ch)
+		// b.Collectors["registrar"].Describe(ch)
 	case "metricbeat":
 		b.Collectors["metricbeat"].Describe(ch)
 	}
@@ -115,13 +115,13 @@ func (b *mainCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	b.Collectors["beat"].Collect(ch)
 	b.Collectors["libbeat"].Collect(ch)
-	b.Collectors["auditd"].Collect(ch)
+	// b.Collectors["auditd"].Collect(ch)
 
 	// Customized collectors per beat type
 	switch b.beatInfo.Beat {
 	case "filebeat":
 		b.Collectors["filebeat"].Collect(ch)
-		b.Collectors["registrar"].Collect(ch)
+		// b.Collectors["registrar"].Collect(ch)
 	case "metricbeat":
 		b.Collectors["metricbeat"].Collect(ch)
 	}
